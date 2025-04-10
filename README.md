@@ -1,4 +1,4 @@
-#Normalizador de Números de Telefone Go
+# Normalizador de Números de Telefone Go
 
 Baseado em um projeto de Jon Calhoun.
 
