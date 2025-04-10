@@ -29,31 +29,59 @@ import (
 const (
 	host     = "localhost"
 	port     = 5432
-	user     = "hreuter"
-	password = "cavalo77"
+	user     = "hqr777"
+	password = "curryH"
 	dbname   = "db_telefones"
 )
 
 func main() {
 	psql := fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable", host, port, user, password)
-	db, err := sql.Open("postgres", psql)
-	if err != nil {
-		panic(err)
-	}
-	err = createDB(db, dbname)
-	if err != nil {
-		panic(err)
-	}
-	db.Close()
+	bd, err := sql.Open("postgres", psql)
+	check_error(err)
+	err = resetBD(bd, dbname)
+	check_error(err)
+	bd.Close()
+
+	psql = fmt.Sprintf("%s dbname=%s", psql, dbname)
+	bd, err = sql.Open("postgres", psql)
+	check_error(err)
+	defer bd.Close()
+	check_error(criaTabelaTelefones(bd))
+
 }
 
-func createDB(db *sql.DB, name string) error {
-	_, err := db.Exec("CREATE DATABASE" + name)
-	fmt.Printf("%s\n",name)
+func criaTabelaTelefones(bd *sql.DB) error {
+	declaracao := `
+			CREATE TABLE IF NOT EXISTS num_telefones (
+				id SERIAL,
+				valor VARCHAR(255)
+			)
+		`
+	_, err := bd.Exec(declaracao)
+	return err
+
+}
+
+func check_error(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func createBD(db *sql.DB, name string) error {
+	_, err := db.Exec("CREATE DATABASE " + name)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func resetBD(db *sql.DB, name string) error {
+	_, err := db.Exec("DROP DATABASE IF EXISTS " + name)
+	if err != nil {
+		return err
+	}
+	return createBD(db, name)
 }
 
 func normalize(telefone string) string {

@@ -1,0 +1,16 @@
+Você precisa criar um usuário no postgres para funcionar, veja os comandos a seguir:
+
+sudo -su postgres
+psql 
+#Na shell do psql, faça o seguinte 
+CREATE USER nome_usuario WITH PASSWORD 'senha qualquer;'
+CREATE DATABASE nome_usuario WITH OWNER nome_usuario ENCODING='utf8'
+
+Por padrão no PostgreSQL, quando você se conecta usando usando: psql -U nome_usuario(sem especificar o banco),ele espera se conectar a um Banco de Dados com o mesmo nome do usuário.
+
+----------------------------------------------------------
+
+Para se conectar com o seu BD:
+psql -U nome_usuario -W
+=>Escreva sua senha, e conectado!!!
+\c banco1 => para se concetar a um BD chamado banco1 cujo o dono é o nome_usuario 
