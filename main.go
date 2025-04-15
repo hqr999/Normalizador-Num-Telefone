@@ -47,7 +47,32 @@ func main() {
 	check_error(err)
 	defer bd.Close()
 	check_error(criaTabelaTelefones(bd))
+	_, err = insertPhone(bd, "1234567890")
+	check_error(err)		
+	_, err = insertPhone(bd, "123 456 7891")
+	check_error(err)
+	_, err = insertPhone(bd, "(123) 456 7892")
+	check_error(err) 
+	_, err = insertPhone(bd, "(123) 456-7893")
+	check_error(err)
+	_, err = insertPhone(bd, "123-456-7894")
+	check_error(err) 
+	_, err = insertPhone(bd, "123-456-7899")
+	check_error(err) 
+	_, err = insertPhone(bd, "1234567892")
+	check_error(err)
+	_, err = insertPhone(bd, "(123)456-7892")
+	check_error(err)
+}
 
+func insertPhone(db *sql.DB, tel string) (int, error) {
+	statement := `INSERT INTO num_telefones(valor) VALUES($1) RETURNING id`
+	var id int
+	err := db.QueryRow(statement, tel).Scan(&id)
+	if err != nil {
+		return -1, err
+	}
+	return id, nil
 }
 
 func criaTabelaTelefones(bd *sql.DB) error {
