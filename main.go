@@ -48,21 +48,68 @@ func main() {
 	defer bd.Close()
 	check_error(criaTabelaTelefones(bd))
 	_, err = insertPhone(bd, "1234567890")
-	check_error(err)		
+	check_error(err)
 	_, err = insertPhone(bd, "123 456 7891")
 	check_error(err)
 	_, err = insertPhone(bd, "(123) 456 7892")
-	check_error(err) 
+	check_error(err)
 	_, err = insertPhone(bd, "(123) 456-7893")
 	check_error(err)
 	_, err = insertPhone(bd, "123-456-7894")
-	check_error(err) 
+	check_error(err)
 	_, err = insertPhone(bd, "123-456-7899")
-	check_error(err) 
-	_, err = insertPhone(bd, "1234567892")
+	check_error(err)
+	id, err := insertPhone(bd, "1234567892")
 	check_error(err)
 	_, err = insertPhone(bd, "(123)456-7892")
 	check_error(err)
+
+	num, err := getTel(bd,id)
+	check_error(err)
+	fmt.Println("Número é ... ",num)
+	tels, err := todosTelefones(bd)
+	check_error(err)
+
+	for _,p := range tels {
+		fmt.Printf("%+v\n",p)
+	}
+}
+
+type telefone struct {
+	id int 
+	numero string 
+}
+
+func todosTelefones(db *sql.DB) ([]telefone, error) {
+		linhas, err := db.Query("SELECT id, valor FROM num_telefones")
+	if err != nil {
+		return nil, err 
+	}
+
+	defer linhas.Close()
+	
+	var retorno []telefone
+	for linhas.Next() {
+		var p telefone
+		if err := linhas.Scan(&p.id,&p.numero);err != nil {
+				return nil, err
+		}
+		retorno = append(retorno, p)
+	}
+	if err := linhas.Err(); err != nil {
+		return nil, err 
+	}
+	return retorno,nil
+}
+
+func getTel(db *sql.DB, id int) (string, error) {
+	var num string
+	linha := db.QueryRow("SELECT valor FROM num_telefones WHERE id=$1", id)
+	err := linha.Scan(&num)
+	if err != nil {
+		return "", err
+	}
+	return num, nil
 }
 
 func insertPhone(db *sql.DB, tel string) (int, error) {
