@@ -57,61 +57,101 @@ func main() {
 	check_error(err)
 	_, err = insertPhone(bd, "123-456-7894")
 	check_error(err)
-	_, err = insertPhone(bd, "123-456-7899")
+	_, err = insertPhone(bd, "123-456-7890")
 	check_error(err)
 	id, err := insertPhone(bd, "1234567892")
 	check_error(err)
 	_, err = insertPhone(bd, "(123)456-7892")
 	check_error(err)
 
-	num, err := getTel(bd,id)
+	num, err := getTel(bd, id)
 	check_error(err)
-	fmt.Println("Número é ... ",num)
+	fmt.Println("Número é ... ", num)
 	tels, err := todosTelefones(bd)
 	check_error(err)
 
-	for _,p := range tels {
-		fmt.Printf("%+v\n",p)
+	for _, p := range tels {
+		fmt.Printf("Trabalhando em...%+v\n", p)
+		num := normalize(p.numero)
+		if num != p.numero {
+			fmt.Println("Atualizando ou removendo...", num)
+			existente, err := achaTel(bd, num)
+			check_error(err)
+			if existente != nil {
+				check_error(deletaTel(bd, p.id))
+			} else {
+				p.numero = num
+				check_error(atualizaTel(bd, p))
+			}
+		} else {
+			fmt.Println("Sem mudanças necessárias")
+		}
 	}
+}
+
+func atualizaTel(db *sql.DB, p telefone) error {
+	statment := `UPDATE num_telefones SET valor=$2 WHERE id=$1`
+	_, err := db.Exec(statment, p.id, p.numero)
+	return err
+
+}
+
+func deletaTel(db *sql.DB, id int) error {
+	statment := `DELETE FROM num_telefones WHERE id=$1`
+	_, err := db.Exec(statment, id)
+	return err
 }
 
 type telefone struct {
-	id int 
-	numero string 
+	id     int
+	numero string
 }
 
 func todosTelefones(db *sql.DB) ([]telefone, error) {
-		linhas, err := db.Query("SELECT id, valor FROM num_telefones")
+	linhas, err := db.Query("SELECT id, valor FROM num_telefones")
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 
 	defer linhas.Close()
-	
+
 	var retorno []telefone
 	for linhas.Next() {
 		var p telefone
-		if err := linhas.Scan(&p.id,&p.numero);err != nil {
-				return nil, err
+		if err := linhas.Scan(&p.id, &p.numero); err != nil {
+			return nil, err
 		}
 		retorno = append(retorno, p)
 	}
 	if err := linhas.Err(); err != nil {
-		return nil, err 
+		return nil, err
 	}
-	return retorno,nil
+	return retorno, nil
 }
 
 func getTel(db *sql.DB, id int) (string, error) {
 	var num string
-	linha := db.QueryRow("SELECT valor FROM num_telefones WHERE id=$1", id)
-	err := linha.Scan(&num)
+	linha := db.QueryRow("SELECT * FROM num_telefones WHERE id=$1", id)
+	err := linha.Scan(&id, &num)
 	if err != nil {
 		return "", err
 	}
 	return num, nil
 }
 
+func achaTel(db *sql.DB, number string) (*telefone, error) {
+	var p telefone
+	linha := db.QueryRow("SELECT * FROM num_telefones WHERE valor=$1", number)
+	err := linha.Scan(&p.id, &p.numero)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	return &p, nil
+}
 func insertPhone(db *sql.DB, tel string) (int, error) {
 	statement := `INSERT INTO num_telefones(valor) VALUES($1) RETURNING id`
 	var id int
